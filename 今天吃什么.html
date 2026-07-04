@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天吃什么 — 根据食材配菜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#201A14;
+    --ink-2:#2B241C;
+    --rice:#FAF5E8;
+    --chili:#C8402F;
+    --chili-dim:#8f2e21;
+    --turmeric:#E4A730;
+    --basil:#4F7A57;
+    --clay:#8B6F52;
+    --clay-line:#3a3226;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--rice);
+    font-family:'Noto Sans SC',sans-serif;
+    min-height:100vh;
+    line-height:1.7;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:56px 24px 100px;
+  }
+  .eyebrow{
+    font-size:13px;
+    letter-spacing:0.12em;
+    color:var(--turmeric);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:22px;height:1px;
+    background:var(--turmeric);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Noto Serif SC',serif;
+    font-weight:700;
+    font-size:clamp(34px,6vw,54px);
+    margin:0 0 16px;
+    color:var(--rice);
+    letter-spacing:0.02em;
+  }
+  .sub{
+    color:#c9bfae;
+    font-size:16px;
+    max-width:560px;
+    margin-bottom:44px;
+  }
+  .panel{
+    background:var(--ink-2);
+    border:1px solid var(--clay-line);
+    border-radius:18px;
+    padding:28px;
+    margin-bottom:36px;
+  }
+  .panel-label{
+    font-size:13px;
+    color:var(--clay);
+    font-weight:600;
+    margin-bottom:14px;
+    letter-spacing:0.02em;
+  }
+  .input-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .input-row input{
+    flex:1;
+    background:var(--ink);
+    border:1px solid var(--clay-line);
+    border-radius:10px;
+    padding:13px 16px;
+    color:var(--rice);
+    font-family:'Noto Sans SC',sans-serif;
+    font-size:15px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .input-row input:focus{border-color:var(--turmeric);}
+  .input-row button{
+    background:var(--turmeric);
+    border:none;
+    border-radius:10px;
+    padding:0 20px;
+    color:#241a05;
+    font-weight:600;
+    font-family:'Noto Sans SC',sans-serif;
+    font-size:15px;
+    cursor:pointer;
+    transition:filter .15s, transform .1s;
+  }
+  .input-row button:hover{filter:brightness(1.08);}
+  .input-row button:active{transform:scale(0.97);}
+  .quick-add{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .quick-chip{
+    background:transparent;
+    border:1px dashed var(--clay-line);
+    color:#c9bfae;
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Noto Sans SC',sans-serif;
+    transition:border-color .15s, color .15s;
+  }
+  .quick-chip:hover{border-color:var(--basil); color:var(--rice);}
+  .tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+    min-height:20px;
+  }
+  .tag{
+    background:var(--basil);
+    color:#eef7ef;
+    padding:8px 10px 8px 16px;
+    border-radius:999px;
+    font-size:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:500;
+  }
+  .tag button{
+    background:rgba(0,0,0,0.15);
+    border:none;
+    color:#eef7ef;
+    width:20px;height:20px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .empty-tags{color:#6b6152; font-size:14px; font-style:italic;}
+  .cta-row{
+    display:flex;
+    justify-content:center;
+    margin:8px 0 48px;
+  }
+  .cta{
+    background:var(--chili);
+    color:#fff2ee;
+    border:none;
+    padding:17px 40px;
+    border-radius:999px;
+    font-family:'Noto Serif SC',serif;
+    font-weight:700;
+    font-size:18px;
+    cursor:pointer;
+    box-shadow:0 8px 24px -8px rgba(200,64,47,0.5);
+    transition:transform .12s, filter .15s;
+  }
+  .cta:hover{filter:brightness(1.08);}
+  .cta:active{transform:scale(0.97);}
+
+  .loading{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    padding:20px 0 40px;
+  }
+  .wok{
+    width:90px; height:46px;
+    border-radius:0 0 50px 50px;
+    background:linear-gradient(180deg,#3a3226,#211b13);
+    border:3px solid #4a4030;
+    border-top:none;
+    position:relative;
+  }
+  .steam{
+    position:absolute;
+    bottom:44px;
+    width:6px; height:26px;
+    border-radius:6px;
+    background:linear-gradient(180deg, rgba(250,245,232,0), rgba(250,245,232,0.55));
+    animation:rise 1.6s ease-in-out infinite;
+  }
+  .steam.s1{left:22px; animation-delay:0s;}
+  .steam.s2{left:42px; animation-delay:.35s;}
+  .steam.s3{left:62px; animation-delay:.7s;}
+  @keyframes rise{
+    0%{transform:translateY(0) scaleY(0.6); opacity:0;}
+    30%{opacity:.9;}
+    100%{transform:translateY(-30px) scaleY(1.1); opacity:0;}
+  }
+  .loading-text{color:var(--clay); font-size:14px; letter-spacing:0.02em;}
+
+  .error-box{
+    background:#3a1f1a;
+    border:1px solid var(--chili-dim);
+    color:#f2c9c1;
+    padding:16px 20px;
+    border-radius:12px;
+    margin-bottom:24px;
+    font-size:14px;
+  }
+  .hint-box{
+    background:rgba(228,167,48,0.08);
+    border:1px solid var(--turmeric);
+    color:#e9d8ae;
+    padding:14px 18px;
+    border-radius:12px;
+    margin-bottom:24px;
+    font-size:14px;
+  }
+
+  .results-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .results-head h2{
+    font-family:'Noto Serif SC',serif;
+    font-size:24px;
+    margin:0;
+    color:var(--rice);
+  }
+  .recipe-grid{
+    display:grid;
+    gap:16px;
+  }
+  .card{
+    background:var(--ink-2);
+    border:1px solid var(--clay-line);
+    border-radius:16px;
+    padding:24px;
+    cursor:pointer;
+    transition:border-color .15s;
+  }
+  .card:hover{border-color:var(--turmeric);}
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+  }
+  .card-title{
+    font-family:'Noto Serif SC',serif;
+    font-size:21px;
+    font-weight:600;
+    margin:0 0 8px;
+    color:var(--rice);
+  }
+  .card-desc{
+    color:#c9bfae;
+    font-size:14.5px;
+    margin:0 0 14px;
+  }
+  .meta-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    font-size:13px;
+  }
+  .meta-pill{
+    padding:4px 12px;
+    border-radius:999px;
+    border:1px solid var(--clay-line);
+    color:#c9bfae;
+  }
+  .meta-pill.match-full{border-color:var(--basil); color:#a8d3ae;}
+  .meta-pill.match-partial{border-color:var(--turmeric); color:#f0cc8a;}
+  .meta-pill.match-none{border-color:var(--clay); color:#c9bfae;}
+  .chevron{
+    color:var(--clay);
+    font-size:22px;
+    transition:transform .2s;
+    flex-shrink:0;
+  }
+  .card.open .chevron{transform:rotate(180deg);}
+
+  .card-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .3s ease;
+  }
+  .card.open .card-body{max-height:2000px;}
+  .card-body-inner{
+    padding-top:20px;
+    border-top:1px solid var(--clay-line);
+    margin-top:18px;
+  }
+  .section-label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--turmeric);
+    margin-bottom:10px;
+    letter-spacing:0.02em;
+  }
+  .ingredient-list{
+    list-style:none;
+    padding:0;
+    margin:0 0 22px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .ingredient-list li{
+    font-size:13.5px;
+    padding:6px 12px;
+    border-radius:8px;
+    background:var(--ink);
+    border:1px solid var(--clay-line);
+  }
+  .ingredient-list li.have{border-color:var(--basil); color:#a8d3ae;}
+  .ingredient-list li.missing{border-color:var(--chili-dim); color:#e7b3a9;}
+  .ingredient-list li.pantry{color:#9a8f7c; font-style:italic;}
+  .steps{
+    list-style:none;
+    counter-reset:step;
+    padding:0;
+    margin:0 0 16px;
+  }
+  .steps li{
+    counter-increment:step;
+    position:relative;
+    padding:0 0 16px 40px;
+    font-size:15px;
+    color:#e5ddc9;
+  }
+  .steps li::before{
+    content:counter(step);
+    position:absolute;
+    left:0; top:-2px;
+    width:26px;height:26px;
+    border-radius:50%;
+    background:var(--chili);
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Sans SC',sans-serif;
+  }
+  .tip{
+    background:rgba(228,167,48,0.08);
+    border-left:3px solid var(--turmeric);
+    padding:12px 16px;
+    font-size:14px;
+    color:#e9d8ae;
+    border-radius:0 8px 8px 0;
+  }
+  footer{
+    text-align:center;
+    color:#5c5245;
+    font-size:12.5px;
+    margin-top:60px;
+  }
+  @media(max-width:600px){
+    .wrap{padding:36px 16px 80px;}
+    .card{padding:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">家常菜 · 就地取材</div>
+  <h1>今天吃什么</h1>
+  <p class="sub">把冰箱和厨房里现有的食材加进来，马上帮你想好菜谱，附完整步骤。</p>
+
+  <div class="panel">
+    <div class="panel-label">现有食材</div>
+    <div class="input-row">
+      <input id="ingredientInput" type="text" placeholder="比如：鸡蛋、猪肉末、大蒜..." />
+      <button id="addBtn">添加</button>
+    </div>
+    <div class="quick-add" id="quickAdd"></div>
+    <div class="tags" id="tagList"></div>
+  </div>
+
+  <div class="cta-row">
+    <button class="cta" id="cookBtn">帮我想菜</button>
+  </div>
+
+  <div id="loadingArea"></div>
+  <div id="errorArea"></div>
+  <div id="resultsArea"></div>
+
+  <footer>内置菜谱库 — 全程离线匹配，无需联网</footer>
+</div>
+
+<script>
+/* ---------- 菜谱数据库 ---------- */
+// 厨房常备料，默认视为已有，不计入缺少项
+const PANTRY = ["食用油","盐","糖","胡椒粉","水","香油"];
+
+const RECIPES = [
+  {
+    name:"西红柿炒鸡蛋", description:"国民家常菜，酸甜下饭，十分钟搞定",
+    cookTime:"10 分钟", difficulty:"简单",
+    main:[{name:"鸡蛋",amount:"3 个"},{name:"西红柿",amount:"2 个"},{name:"葱",amount:"1 根"},{name:"蒜",amount:"2 瓣"}],
+    steps:["鸡蛋打散备用，西红柿切块","热锅倒油，蒜末爆香","倒入西红柿翻炒出汁","倒入蛋液快速炒匀，加盐调味，撒葱花出锅"],
+    tip:"西红柿去皮口感更细腻，用刀划十字后开水烫一下即可去皮"
+  },
+  {
+    name:"青椒肉丝", description:"经典下饭菜，肉丝滑嫩椒香十足",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"猪肉丝",amount:"200 克"},{name:"青椒",amount:"2 个"},{name:"蒜",amount:"2 瓣"},{name:"生抽",amount:"1 汤匙"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["猪肉丝加生抽、淀粉抓匀腌制10分钟","热锅倒油，蒜片爆香，下肉丝滑炒至变色","加入青椒丝大火快炒","加盐、生抽调味，炒匀出锅"],
+    tip:"肉丝提前用淀粉抓一下会更嫩滑"
+  },
+  {
+    name:"麻婆豆腐", description:"麻辣鲜香，豆腐嫩滑，非常下饭",
+    cookTime:"20 分钟", difficulty:"中等",
+    main:[{name:"豆腐",amount:"1 块"},{name:"猪肉末",amount:"100 克"},{name:"豆瓣酱",amount:"1 汤匙"},{name:"蒜",amount:"2 瓣"},{name:"葱",amount:"1 根"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["豆腐切块，放盐水中焯一下去豆腥味","热锅炒香蒜末，下肉末炒散","加入豆瓣酱炒出红油，加水烧开","放入豆腐块小火煮5分钟，淀粉勾芡，撒葱花出锅"],
+    tip:"豆腐提前焯水可以让豆腐更紧实不易碎"
+  },
+  {
+    name:"宫保鸡丁", description:"经典川菜，酸甜微辣，花生香脆",
+    cookTime:"20 分钟", difficulty:"中等",
+    main:[{name:"鸡胸肉",amount:"250 克"},{name:"花生米",amount:"1 把"},{name:"干辣椒",amount:"5 个"},{name:"蒜",amount:"3 瓣"},{name:"生抽",amount:"1 汤匙"},{name:"醋",amount:"1 汤匙"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["鸡胸肉切丁，用生抽、淀粉抓匀腌制","调好糖醋汁：生抽、醋、糖、水淀粉混合备用","热锅爆香干辣椒和蒜片，下鸡丁炒至变色","倒入调好的酱汁快速翻炒，最后加入花生米炒匀"],
+    tip:"花生米最后放，保持酥脆口感"
+  },
+  {
+    name:"蒜蓉炒时蔬", description:"清爽快手，蒜香浓郁，几分钟出锅",
+    cookTime:"8 分钟", difficulty:"简单",
+    main:[{name:"油菜",amount:"1 把"},{name:"蒜",amount:"4 瓣"}],
+    steps:["油菜洗净沥干，蒜切末","热锅大火，倒油爆香蒜末","下油菜大火快炒","加盐调味，炒匀即可出锅"],
+    tip:"大火快炒能保持蔬菜的脆嫩和翠绿色"
+  },
+  {
+    name:"番茄蛋汤", description:"清淡暖胃，搭配主菜刚刚好",
+    cookTime:"10 分钟", difficulty:"简单",
+    main:[{name:"西红柿",amount:"2 个"},{name:"鸡蛋",amount:"2 个"},{name:"葱",amount:"1 根"}],
+    steps:["西红柿切块，鸡蛋打散","热锅倒油，炒软西红柿出汁","加水烧开，转小火","淋入蛋液，加盐调味，撒葱花出锅"],
+    tip:"蛋液要沿着锅边慢慢淋入，才能形成漂亮的蛋花"
+  },
+  {
+    name:"蛋炒饭", description:"隔夜饭的最佳归宿，简单又管饱",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"米饭",amount:"2 碗"},{name:"鸡蛋",amount:"2 个"},{name:"葱",amount:"1 根"},{name:"猪肉末",amount:"100 克"},{name:"生抽",amount:"1 汤匙"}],
+    steps:["热锅炒香肉末盛出备用","打散鸡蛋炒至半凝固盛出","热锅倒油，下米饭炒散炒热","倒入炒好的肉末和鸡蛋，加生抽、盐炒匀，撒葱花出锅"],
+    tip:"用隔夜冷藏的米饭炒出来粒粒分明不粘锅"
+  },
+  {
+    name:"红烧肉", description:"肥而不腻，色泽红亮，家宴必备",
+    cookTime:"60 分钟", difficulty:"中等",
+    main:[{name:"五花肉",amount:"500 克"},{name:"姜",amount:"3 片"},{name:"葱",amount:"2 根"},{name:"老抽",amount:"1 汤匙"},{name:"生抽",amount:"1 汤匙"},{name:"冰糖",amount:"1 把"}],
+    steps:["五花肉切块，冷水下锅焯水去血沫","热锅放冰糖小火炒出糖色","下五花肉块翻炒上色，加姜葱煸炒出香味","加老抽、生抽、热水没过肉，小火炖40分钟至软烂收汁"],
+    tip:"炒糖色时火一定要小，糖色炒过头会发苦"
+  },
+  {
+    name:"鱼香肉丝", description:"无鱼却有鱼香味，酸甜咸辣层次丰富",
+    cookTime:"20 分钟", difficulty:"中等",
+    main:[{name:"猪肉丝",amount:"200 克"},{name:"木耳",amount:"1 把"},{name:"胡萝卜",amount:"半根"},{name:"豆瓣酱",amount:"1 汤匙"},{name:"蒜",amount:"3 瓣"},{name:"醋",amount:"1 汤匙"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["猪肉丝加淀粉、生抽腌制备用，木耳胡萝卜切丝","调鱼香汁：醋、糖、生抽、水淀粉混合","热锅爆香蒜末和豆瓣酱，下肉丝炒散","加入木耳胡萝卜丝翻炒，倒入调好的鱼香汁炒匀出锅"],
+    tip:"鱼香汁要提前调好，下锅后快速翻炒才能挂汁均匀"
+  },
+  {
+    name:"糖醋里脊", description:"外酥里嫩，酸甜开胃，老少皆宜",
+    cookTime:"30 分钟", difficulty:"中等",
+    main:[{name:"猪里脊肉",amount:"300 克"},{name:"淀粉",amount:"3 汤匙"},{name:"鸡蛋",amount:"1 个"},{name:"醋",amount:"2 汤匙"},{name:"番茄酱",amount:"2 汤匙"}],
+    steps:["里脊肉切条，用蛋液和淀粉裹匀","油锅烧热，将肉条炸至金黄捞出，复炸一次更酥脆","调糖醋汁：醋、糖、番茄酱、水淀粉混合","热锅倒入糖醋汁烧开，放入炸好的里脊快速裹匀出锅"],
+    tip:"复炸一次可以让外皮更酥脆持久不回软"
+  },
+  {
+    name:"干煸豆角", description:"豆角煸得微皱，咸香微辣，特别下饭",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"豆角",amount:"300 克"},{name:"猪肉末",amount:"80 克"},{name:"蒜",amount:"3 瓣"},{name:"干辣椒",amount:"3 个"}],
+    steps:["豆角洗净切段，尽量沥干水分","热锅多油，中火煸炒豆角至表皮起皱","盛出豆角，锅内爆香蒜末、干辣椒和肉末","倒入豆角一起翻炒，加盐、生抽调味出锅"],
+    tip:"豆角一定要沥干水分再下锅，避免油溅"
+  },
+  {
+    name:"韭菜炒蛋", description:"韭菜香气浓郁，鸡蛋滑嫩，快手家常菜",
+    cookTime:"10 分钟", difficulty:"简单",
+    main:[{name:"韭菜",amount:"1 把"},{name:"鸡蛋",amount:"3 个"}],
+    steps:["韭菜洗净切段，鸡蛋打散","热锅倒油，倒入蛋液炒至凝固盛出","锅中再加少许油，下韭菜大火快炒","倒入炒蛋一起翻炒，加盐调味出锅"],
+    tip:"鸡蛋先炒好盛出，避免炒老，最后和韭菜混合即可"
+  },
+  {
+    name:"木须肉", description:"肉丝、鸡蛋、木耳、黄瓜同炒，营养丰富",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"猪肉丝",amount:"150 克"},{name:"鸡蛋",amount:"2 个"},{name:"木耳",amount:"1 把"},{name:"黄瓜",amount:"1 根"},{name:"蒜",amount:"2 瓣"}],
+    steps:["肉丝腌制备用，鸡蛋打散炒熟盛出","热锅爆香蒜末，下肉丝炒至变色","加入木耳、黄瓜片翻炒","倒入炒蛋一起炒匀，加盐、生抽调味出锅"],
+    tip:"黄瓜最后放，保持清脆口感"
+  },
+  {
+    name:"酸辣汤", description:"酸辣开胃，暖身暖胃，做法简单",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"豆腐",amount:"半块"},{name:"鸡蛋",amount:"1 个"},{name:"木耳",amount:"1 把"},{name:"醋",amount:"2 汤匙"},{name:"胡椒粉",amount:"1 茶匙"},{name:"淀粉",amount:"1 汤匙"}],
+    steps:["豆腐、木耳切丝备用","锅中加水烧开，放入豆腐丝、木耳丝煮开","水淀粉勾芡，淋入蛋液搅出蛋花","加醋、盐、胡椒粉调味，撒葱花出锅"],
+    tip:"胡椒粉最后放，加热时间太长香气会挥发"
+  },
+  {
+    name:"白灼虾", description:"最大限度保留虾的鲜甜，做法极简",
+    cookTime:"10 分钟", difficulty:"简单",
+    main:[{name:"虾",amount:"300 克"},{name:"姜",amount:"2 片"},{name:"葱",amount:"1 根"},{name:"生抽",amount:"2 汤匙"}],
+    steps:["虾洗净剪去虾须","锅中加水，放姜片葱段煮开","放入虾煮至变色卷曲，约2-3分钟","捞出装盘，蘸生抽或自调蘸料食用"],
+    tip:"虾一变色卷曲就要立刻捞出，煮久了肉质会变老"
+  },
+  {
+    name:"蒜蓉粉丝虾", description:"蒜香浓郁，粉丝吸满汤汁，鲜美下饭",
+    cookTime:"20 分钟", difficulty:"中等",
+    main:[{name:"虾",amount:"250 克"},{name:"粉丝",amount:"1 把"},{name:"蒜",amount:"6 瓣"},{name:"生抽",amount:"1 汤匙"}],
+    steps:["粉丝用温水泡软，虾开背去虾线","蒜末爆香，一半直接淋在虾上，一半留炒锅用","虾摆盘，铺上粉丝，淋蒜末和生抽，上锅蒸8分钟","蒸好后淋热油激香，撒葱花出锅"],
+    tip:"虾开背摆盘更入味，也更容易蒸熟"
+  },
+  {
+    name:"土豆丝", description:"酸辣爽脆，家常小炒，百吃不腻",
+    cookTime:"12 分钟", difficulty:"简单",
+    main:[{name:"土豆",amount:"2 个"},{name:"青椒",amount:"1 个"},{name:"蒜",amount:"2 瓣"},{name:"醋",amount:"1 汤匙"},{name:"干辣椒",amount:"2 个"}],
+    steps:["土豆切细丝，用清水冲洗掉多余淀粉","热锅爆香蒜末和干辣椒","下土豆丝大火快炒，加醋炒匀","加入青椒丝，加盐调味炒匀出锅"],
+    tip:"土豆丝冲水去淀粉，炒出来才会爽脆不粘连"
+  },
+  {
+    name:"肉末茄子", description:"茄子软糯入味，肉末咸香，非常下饭",
+    cookTime:"20 分钟", difficulty:"简单",
+    main:[{name:"茄子",amount:"2 根"},{name:"猪肉末",amount:"100 克"},{name:"蒜",amount:"3 瓣"},{name:"豆瓣酱",amount:"1 汤匙"},{name:"生抽",amount:"1 汤匙"}],
+    steps:["茄子切条，油锅炸软或煎软后盛出","锅内爆香蒜末，下肉末炒散","加入豆瓣酱炒出红油","倒入茄子翻炒，加生抽、盐调味，炒匀出锅"],
+    tip:"茄子先煎软定型，成品不易碎烂"
+  },
+  {
+    name:"香菇滑鸡", description:"鸡肉嫩滑，香菇鲜香，一锅蒸出的懒人菜",
+    cookTime:"25 分钟", difficulty:"简单",
+    main:[{name:"鸡肉",amount:"300 克"},{name:"香菇",amount:"5 朵"},{name:"姜",amount:"2 片"},{name:"生抽",amount:"1 汤匙"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["鸡肉切块，用生抽、淀粉、姜丝腌制15分钟","香菇切片铺在盘底","鸡肉平铺在香菇上","上锅大火蒸15分钟至熟透"],
+    tip:"腌制时加一点点油可以让蒸出来的鸡肉更嫩滑"
+  },
+  {
+    name:"葱爆羊肉", description:"葱香浓郁，羊肉鲜嫩，北方家常经典",
+    cookTime:"15 分钟", difficulty:"中等",
+    main:[{name:"羊肉片",amount:"250 克"},{name:"大葱",amount:"2 根"},{name:"蒜",amount:"2 瓣"},{name:"生抽",amount:"1 汤匙"},{name:"料酒",amount:"1 汤匙"}],
+    steps:["羊肉片用生抽、料酒腌制10分钟，大葱切段","热锅大火，蒜末爆香","下羊肉片快速滑炒至变色","加入葱段大火快炒，加盐调味炒匀出锅"],
+    tip:"羊肉下锅后大火快炒，时间过长肉质会变柴"
+  },
+  {
+    name:"醋溜白菜", description:"酸甜爽口，做法简单，解腻下饭",
+    cookTime:"10 分钟", difficulty:"简单",
+    main:[{name:"白菜",amount:"半棵"},{name:"蒜",amount:"2 瓣"},{name:"干辣椒",amount:"2 个"},{name:"醋",amount:"2 汤匙"},{name:"淀粉",amount:"1 茶匙"}],
+    steps:["白菜切片，梗叶分开备用","热锅爆香蒜末、干辣椒，先下白菜梗炒软","加入白菜叶翻炒","加醋、糖、盐，水淀粉勾芡炒匀出锅"],
+    tip:"梗叶分开炒能让两者都保持刚好的熟度"
+  },
+  {
+    name:"蚂蚁上树", description:"粉丝吸满肉末鲜香，四川经典家常菜",
+    cookTime:"15 分钟", difficulty:"简单",
+    main:[{name:"粉丝",amount:"1 把"},{name:"猪肉末",amount:"100 克"},{name:"豆瓣酱",amount:"1 汤匙"},{name:"蒜",amount:"3 瓣"},{name:"生抽",amount:"1 汤匙"}],
+    steps:["粉丝用温水泡软，蒜切末","热锅爆香蒜末，下肉末炒散","加入豆瓣酱炒出红油，加水烧开","放入粉丝，加生抽调味，煮至汤汁收干出锅"],
+    tip:"粉丝提前泡软后剪短一些，更方便入口"
+  }
+];
+
+/* ---------- 状态 ---------- */
+const quickAddItems = ["鸡蛋","大蒜","猪肉末","米饭","生抽","辣椒","葱","洋葱","西红柿","鸡肉","虾","豆腐","青椒","土豆"];
+let ingredients = [];
+
+const tagList = document.getElementById('tagList');
+const quickAdd = document.getElementById('quickAdd');
+const input = document.getElementById('ingredientInput');
+const addBtn = document.getElementById('addBtn');
+const cookBtn = document.getElementById('cookBtn');
+const loadingArea = document.getElementById('loadingArea');
+const errorArea = document.getElementById('errorArea');
+const resultsArea = document.getElementById('resultsArea');
+
+function renderQuickAdd(){
+  quickAdd.innerHTML = '';
+  quickAddItems.forEach(item=>{
+    if(ingredients.includes(item)) return;
+    const chip = document.createElement('button');
+    chip.className = 'quick-chip';
+    chip.textContent = '+ ' + item;
+    chip.onclick = () => addIngredient(item);
+    quickAdd.appendChild(chip);
+  });
+}
+
+function renderTags(){
+  tagList.innerHTML = '';
+  if(ingredients.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty-tags';
+    empty.textContent = '还没有食材，加一些试试吧';
+    tagList.appendChild(empty);
+    return;
+  }
+  ingredients.forEach(ing=>{
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `<span>${escapeHtml(ing)}</span>`;
+    const rm = document.createElement('button');
+    rm.textContent = '×';
+    rm.onclick = () => removeIngredient(ing);
+    tag.appendChild(rm);
+    tagList.appendChild(tag);
+  });
+}
+
+function addIngredient(name){
+  const val = name.trim();
+  if(!val || ingredients.includes(val)) return;
+  ingredients.push(val);
+  renderTags();
+  renderQuickAdd();
+}
+
+function removeIngredient(name){
+  ingredients = ingredients.filter(i => i !== name);
+  renderTags();
+  renderQuickAdd();
+}
+
+addBtn.onclick = () => {
+  addIngredient(input.value);
+  input.value = '';
+  input.focus();
+};
+input.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    addIngredient(input.value);
+    input.value = '';
+  }
+});
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showLoading(show){
+  loadingArea.innerHTML = show ? `
+    <div class="loading">
+      <div class="wok">
+        <div class="steam s1"></div>
+        <div class="steam s2"></div>
+        <div class="steam s3"></div>
+      </div>
+      <div class="loading-text">正在想菜谱...</div>
+    </div>
+  ` : '';
+}
+
+function showError(msg){
+  errorArea.innerHTML = msg ? `<div class="error-box">${escapeHtml(msg)}</div>` : '';
+}
+
+function showHint(msg){
+  errorArea.innerHTML = msg ? `<div class="hint-box">${escapeHtml(msg)}</div>` : '';
+}
+
+function matchStatus(recipeIngredientName){
+  const lower = recipeIngredientName.toLowerCase();
+  return ingredients.some(ing => {
+    const l = ing.toLowerCase();
+    return lower.includes(l) || l.includes(lower);
+  });
+}
+
+function scoreRecipe(recipe){
+  const matched = recipe.main.filter(i => matchStatus(i.name)).length;
+  return { matched, total: recipe.main.length, missing: recipe.main.length - matched };
+}
+
+function pickRecipes(){
+  const scored = RECIPES.map(r => ({ recipe: r, ...scoreRecipe(r) }));
+  scored.sort((a,b) => {
+    if(b.matched !== a.matched) return b.matched - a.matched;
+    if(a.missing !== b.missing) return a.missing - b.missing;
+    return a.total - b.total;
+  });
+  return scored.slice(0, 4);
+}
+
+function renderResults(){
+  const picks = pickRecipes();
+  const anyMatch = picks.some(p => p.matched > 0);
+
+  if(!anyMatch){
+    showHint('暂时没有完全匹配的菜谱，先给你推荐几道简单易做的菜，试试补充更多食材，结果会更贴合你手上的材料');
+  }else{
+    showHint('');
+  }
+
+  const head = `<div class="results-head"><h2>推荐菜谱</h2></div>`;
+  const cards = picks.map((p, idx) => {
+    const r = p.recipe;
+    const ingWithStatus = r.main.map(i => ({ ...i, have: matchStatus(i.name) }));
+    const matchClass = p.matched === 0 ? 'match-none' : (p.missing === 0 ? 'match-full' : 'match-partial');
+    const matchText = p.matched === 0 ? '不妨试试' : (p.missing === 0 ? '食材齐全' : `已有 ${p.matched}/${p.total}，缺 ${p.missing} 样`);
+
+    const ingListHtml = ingWithStatus.map(i =>
+      `<li class="${i.have ? 'have' : 'missing'}">${escapeHtml(i.name)}${i.amount ? ' — ' + escapeHtml(i.amount) : ''}</li>`
+    ).join('') + PANTRY.map(p => `<li class="pantry">${escapeHtml(p)}</li>`).join('');
+
+    const stepsHtml = r.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
+    return `
+      <div class="card" data-idx="${idx}">
+        <div class="card-top">
+          <div>
+            <h3 class="card-title">${escapeHtml(r.name)}</h3>
+            <p class="card-desc">${escapeHtml(r.description)}</p>
+            <div class="meta-row">
+              <span class="meta-pill">${escapeHtml(r.cookTime)}</span>
+              <span class="meta-pill">${escapeHtml(r.difficulty)}</span>
+              <span class="meta-pill ${matchClass}">${matchText}</span>
+            </div>
+          </div>
+          <div class="chevron">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <div class="section-label">食材</div>
+            <ul class="ingredient-list">${ingListHtml}</ul>
+            <div class="section-label">做法</div>
+            <ol class="steps">${stepsHtml}</ol>
+            ${r.tip ? `<div class="tip">💡 ${escapeHtml(r.tip)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  resultsArea.innerHTML = head + `<div class="recipe-grid">${cards}</div>`;
+
+  resultsArea.querySelectorAll('.card').forEach(card => {
+    card.querySelector('.card-top').addEventListener('click', () => {
+      card.classList.toggle('open');
+    });
+  });
+}
+
+function generateRecipes(){
+  if(ingredients.length === 0){
+    showError('先加入至少一种食材吧');
+    resultsArea.innerHTML = '';
+    return;
+  }
+  showError('');
+  showLoading(true);
+  resultsArea.innerHTML = '';
+  setTimeout(() => {
+    showLoading(false);
+    renderResults();
+  }, 450);
+}
+
+cookBtn.onclick = generateRecipes;
+
+renderQuickAdd();
+renderTags();
+</script>
+</body>
+</html>
